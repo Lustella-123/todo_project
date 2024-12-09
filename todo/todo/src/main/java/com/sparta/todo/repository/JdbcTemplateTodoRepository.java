@@ -11,13 +11,10 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
-public class JdbcTemplateTodoRepository implements TodoRepository{
+public class JdbcTemplateTodoRepository implements TodoRepository {
     //속
     private final JdbcTemplate jdbcTemplate;
 
@@ -48,9 +45,46 @@ public class JdbcTemplateTodoRepository implements TodoRepository{
     // 전체 일정 조회
     @Override
     public List<TodoResponseDto> getAllTodos(LocalDateTime updatedTime, String user) {
-        return jdbcTemplate.query("SELECT * FROM todo", todoRowMapper());
+        StringBuilder sql = new StringBuilder("SELECT * FROM todo WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (updatedTime != null) {
+            sql.append(" AND DATE_FORMAT(updatedTime, 'yyyy-MM-dd') = ?");
+            params.add(updatedTime);
+        }
+        if (user != null) {
+            sql.append(" AND user = ?");
+            params.add(user);
+        }
+
+        return jdbcTemplate.query(sql.toString(), todoRowMapper(), params.toArray());
     }
 
+    // 선택 일정 조회
+    @Override
+    public Optional<Todo> getTodoById(Long id) {
+        List<Todo> result = jdbcTemplate.query("SELECT * FROM todo WHERE id = ?", todoRowMapperV2(), id);
+        return result.stream().findAny();
+    }
+
+    // 선택 일정 수정
+    @Override
+    public void updateTodo(Long id, String user, String todo) {
+        jdbcTemplate.update("UPDATE todo SET user = ?, todo = ? WHERE id = ?", user, todo, id);
+    }
+
+    // 선택 일정 삭제
+    @Override
+    public boolean deleteTodo(Long id) {
+        String sql = "DELETE FROM todo WHERE id = ?";
+        return jdbcTemplate.update(sql, id) > 0;
+    }
+
+    /**
+     * 전체 일정 조회용
+     *
+     * @return
+     */
     private RowMapper<TodoResponseDto> todoRowMapper() {
         return new RowMapper<TodoResponseDto>() {
             @Override
@@ -67,13 +101,11 @@ public class JdbcTemplateTodoRepository implements TodoRepository{
         };
     }
 
-    // 선택 일정 조회
-    @Override
-    public Optional<Todo> getTodoById(Long id) {
-        List<Todo> result = jdbcTemplate.query("SELECT * FROM todo WHERE id = ?", todoRowMapperV2(), id);
-        return result.stream().findAny();
-    }
-
+    /**
+     * 선택 일정 조회용
+     *
+     * @return
+     */
     private RowMapper<Todo> todoRowMapperV2() {
         return new RowMapper<Todo>() {
             @Override

@@ -12,4 +12,8 @@ public interface TodoService {
     List<TodoResponseDto> getAllTodos(LocalDateTime updatedTime, String user);
 
     TodoResponseDto getTodoById(Long id);
+
+    TodoResponseDto updateTodo(Long id, TodoRequestDto requestDto);
+
+    void deleteTodo(Long id, String password);
 }

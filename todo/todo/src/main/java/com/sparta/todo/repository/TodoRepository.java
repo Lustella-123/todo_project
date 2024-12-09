@@ -13,4 +13,8 @@ public interface TodoRepository {
     List<TodoResponseDto> getAllTodos(LocalDateTime updatedTime, String user);
 
     Optional<Todo> getTodoById(Long id);
+
+    void updateTodo(Long id, String user, String todo);
+
+    boolean deleteTodo(Long id);
 }
